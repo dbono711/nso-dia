@@ -1,0 +1,77 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+  <devices xmlns="http://tail-f.com/ns/ncs">
+    <device>
+      <name>{$DEVICE-NAME}</name>
+      <config>
+        <!-- ios interface configuration -->
+        <interface xmlns="urn:ios">
+          <Ethernet when="{$INTERFACE-TYPE = 'Ethernet'}">
+            <name>{$INTERFACE-ID}</name>
+            <description>{$DESCRIPTION}</description>
+            <encapsulation when="{$VLAN-ID != ''}">
+              <dot1Q>
+                <vlan-id>{$VLAN-ID}</vlan-id>
+              </dot1Q>
+            </encapsulation>
+            <ip>
+              <address>
+                <primary>
+                  <address>{$IPV4-ADDRESS}</address>
+                  <mask>{$IPV4-MASK}</mask>
+                </primary>
+              </address>
+            </ip>
+          </Ethernet>
+          <GigabitEthernet when="{$INTERFACE-TYPE = 'GigabitEthernet'}">
+            <name>{$INTERFACE-ID}</name>
+            <description>{$DESCRIPTION}</description>
+            <encapsulation when="{$VLAN-ID != ''}">
+              <dot1Q>
+                <vlan-id>{$VLAN-ID}</vlan-id>
+              </dot1Q>
+            </encapsulation>
+            <ip>
+              <address>
+                <primary>
+                  <address>{$IPV4-ADDRESS}</address>
+                  <mask>{$IPV4-MASK}</mask>
+                </primary>
+              </address>
+            </ip>
+          </GigabitEthernet>
+          <TenGigabitEthernet when="{$INTERFACE-TYPE = 'TenGigabitEthernet'}">
+            <name>{$INTERFACE-ID}</name>
+            <description>{$DESCRIPTION}</description>
+            <encapsulation when="{$VLAN-ID != ''}">
+              <dot1Q>
+                <vlan-id>{$VLAN-ID}</vlan-id>
+              </dot1Q>
+            </encapsulation>
+            <ip>
+              <address>
+                <primary>
+                  <address>{$IPV4-ADDRESS}</address>
+                  <mask>{$IPV4-MASK}</mask>
+                </primary>
+              </address>
+            </ip>
+          </TenGigabitEthernet>
+        </interface>
+
+        <!-- ios isis configuration -->
+        <router xmlns="urn:ios">
+          <isis-container>
+            <isis tags="nocreate">
+              <area-tag>{$ISIS-AREA-TAG}</area-tag>
+              <passive-interface tags="merge">
+                <interface>
+                  <name>{$PASSIVE-INTERFACE}</name>
+                </interface>
+              </passive-interface>
+            </isis>
+          </isis-container>
+        </router>
+      </config>
+    </device>
+  </devices>
+</config-template>

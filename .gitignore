@@ -1,0 +1,16 @@
+**/load-dir/*
+**/private-jar/*
+**/shared-jar/*
+**/build/*
+**/namespaces/*
+**/.venv/*
+**/*.pyc
+**/logs/*
+**/*DS_Store*
+**/log.*
+cisco-ios*
+*.classpath
+*.project
+*.fxs
+*gz
+.pytest_cache/

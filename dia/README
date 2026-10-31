@@ -1,0 +1,36 @@
+dia - Dedicated Internet Access (DIA) service for Cisco NSO 6.4
+
+Configures a customer-facing PE interface (port or dot1Q sub-interface)
+with a description and IPv4 address, and adds it as a passive interface
+to the existing 'router isis 1' process. Supported NED: cisco-ios-cli.
+
+'router isis 1' must already exist on the PE; the service only owns the
+passive-interface entry. The service also refuses a port that already has
+an IPv4 address, or a sub-interface that already exists.
+
+Build and load:
+
+  make all                                   # from repo root
+  ncs_cli -C -u admin  ->  packages reload
+
+Sample instance (port-mode):
+
+  services dia CUSTOMER-A DIA-0001
+   provider-edge device ios-0
+    interface Ethernet0/3
+     description  to_client3
+     ipv4-address 100.64.16.1/29
+     port-mode    true
+  commit dry-run outformat native
+
+  interface Ethernet0/3
+   description "to_client3"
+   ip address 100.64.16.1 255.255.255.248
+  exit
+  router isis 1
+   passive-interface Ethernet0/3
+  !
+
+Sub-interface: set 'port-mode false' and 'vlan-id <1-4094>'; the service
+creates Ethernet0/3.<vlan-id> with 'encapsulation dot1Q <vlan-id>'.
+If 'description' is omitted it defaults to NSO:<customer-name>:<service-id>.

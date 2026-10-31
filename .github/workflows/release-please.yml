@@ -1,0 +1,31 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          release-type: simple
+          config-file: .release-please-config.json
+
+      - name: Trigger package artifact build
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          gh workflow run package-artifact.yml \
+            --repo ${{ github.repository }} \
+            --ref main \
+            --field tag=${{ steps.release.outputs.tag_name }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

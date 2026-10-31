@@ -1,0 +1,111 @@
+module dia {
+  yang-version 1.1;
+  namespace "http://dbono711/dia";
+  prefix dia;
+
+  import tailf-common { prefix tailf; }
+  import tailf-ncs { prefix ncs; }
+
+  organization
+    "Darren Bono";
+
+  contact
+    "darren.bono@att.net";
+
+  description
+    "NSO service package for Dedicated Internet Access (DIA) services";
+
+  revision 2026-10-28 {
+    description "Initial revision";
+  }
+
+  grouping interface {
+    leaf description {
+      tailf:info "Interface description (default: NSO:<customer-name>:<service-id>)";
+      type string {
+        length "1..240";
+      }
+    }
+
+    leaf ipv4-address {
+      tailf:info "Interface IPv4 address in CIDR notation (e.g., 100.64.16.1/29)";
+      type tailf:ipv4-address-and-prefix-length;
+      mandatory true;
+    }
+
+    leaf port-mode {
+      tailf:info "Apply service on port level (true) or on a dot1Q sub-interface (false)";
+      type boolean;
+      mandatory true;
+    }
+
+    leaf vlan-id {
+      tailf:info "Service encapsulation VLAN ID, also used as the sub-interface number";
+      when "../port-mode = 'false'";
+      mandatory true;
+      type uint16 {
+        range "1 .. 4094";
+      }
+    }
+  }
+
+  augment /ncs:services {
+    list dia {
+      tailf:info "Dedicated Internet Access (DIA) Services";
+      description "Dedicated Internet Access (DIA) service package";
+      key "customer-name service-id";
+
+      uses ncs:service-data;
+      ncs:servicepoint dia-servicepoint;
+
+      leaf customer-name {
+        tailf:info "Customer name";
+        type leafref {
+          path "/ncs:customers/ncs:customer/ncs:id";
+        }
+      }
+
+      leaf service-id {
+        tailf:info "Service identifier";
+        tailf:cli-allow-range;
+        type string;
+      }
+
+      container provider-edge {
+        tailf:info "Provider Edge (PE) configuration";
+
+        list device {
+          tailf:info "Provider Edge device";
+          key name;
+
+          leaf name {
+            tailf:info "Provider Edge device name";
+            type leafref {
+              path "/ncs:devices/ncs:device/ncs:name";
+            }
+            must "contains(/ncs:devices/ncs:device[ncs:name=current()/../name]/ncs:device-type/ncs:cli/ncs:ned-id, 'cisco-ios-cli')" {
+              error-message "Provider Edge devices must be Cisco IOS";
+            }
+          }
+
+          list interface {
+            tailf:info "PE customer-facing interface";
+            key name;
+
+            leaf name {
+              tailf:info "Physical interface name (e.g., Ethernet0/3)";
+              tailf:cli-completion-actionpoint dia-interface-name {
+                tailf:cli-completion-id "provideredge-";
+              }
+              type string {
+                pattern '(Ethernet|GigabitEthernet|TenGigabitEthernet)[0-9]+(/[0-9]+)*';
+              }
+            }
+
+            uses interface;
+          }
+        }
+      }
+    }
+  }
+}
