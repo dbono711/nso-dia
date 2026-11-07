@@ -34,3 +34,20 @@ Sample instance (port-mode):
 Sub-interface: set 'port-mode false' and 'vlan-id <1-4094>'; the service
 creates Ethernet0/3.<vlan-id> with 'encapsulation dot1Q <vlan-id>'.
 If 'description' is omitted it defaults to NSO:<customer-name>:<service-id>.
+
+Static routes (optional, per interface):
+
+  services dia CUSTOMER-A DIA-0001
+   provider-edge device ios-0
+    interface Ethernet0/3
+     static ipv4-destination-prefix 100.64.20.0/24 ipv4-forwarding 100.64.16.2
+
+  ip route 100.64.20.0 255.255.255.0 100.64.16.2
+  ip prefix-list CUSTOMER-STATIC seq 10 permit 100.64.20.0/24
+
+Each route also gets an entry in the device's CUSTOMER-STATIC prefix-list.
+The sequence number is the lowest free multiple of 10 on that device. It is
+allocated once, in pre-modification, and kept in a hidden leaf, so it never
+moves on re-deploy. The next-hop must be a host address in the interface
+subnet, and a prefix already permitted by another CUSTOMER-STATIC entry is
+refused.

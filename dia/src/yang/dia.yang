@@ -3,6 +3,7 @@ module dia {
   namespace "http://dbono711/dia";
   prefix dia;
 
+  import ietf-inet-types { prefix inet; }
   import tailf-common { prefix tailf; }
   import tailf-ncs { prefix ncs; }
 
@@ -14,6 +15,10 @@ module dia {
 
   description
     "NSO service package for Dedicated Internet Access (DIA) services";
+
+  revision 2026-11-04 {
+    description "Add customer static routes and CUSTOMER-STATIC prefix-list entries";
+  }
 
   revision 2026-10-28 {
     description "Initial revision";
@@ -45,6 +50,36 @@ module dia {
       mandatory true;
       type uint16 {
         range "1 .. 4094";
+      }
+    }
+
+    container static {
+      tailf:info "Customer static routes reachable via this interface";
+      presence "true";
+
+      list ipv4-destination-prefix {
+        tailf:info "Static route destination prefix";
+        key ipv4-prefix;
+        min-elements 1;
+
+        leaf ipv4-prefix {
+          tailf:info "Destination prefix in CIDR notation (e.g., 100.64.20.0/24)";
+          type inet:ipv4-prefix;
+        }
+
+        leaf ipv4-forwarding {
+          tailf:info "Static route next-hop, must be in the interface subnet (e.g., 100.64.16.2)";
+          type inet:ipv4-address;
+          mandatory true;
+        }
+
+        leaf prefix-list-seq {
+          tailf:display-when "false()";
+          tailf:info "CUSTOMER-STATIC prefix-list sequence number, allocated in pre-modification";
+          type uint32 {
+            range "1 .. 4294967294";
+          }
+        }
       }
     }
   }

@@ -1,0 +1,30 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+  <devices xmlns="http://tail-f.com/ns/ncs">
+    <device>
+      <name>{$DEVICE-NAME}</name>
+      <config>
+        <!-- ios static route and CUSTOMER-STATIC prefix-list configuration -->
+        <ip xmlns="urn:ios">
+          <route>
+            <ip-route-forwarding-list>
+              <prefix>{$STATIC-PREFIX}</prefix>
+              <mask>{$STATIC-MASK}</mask>
+              <forwarding-address>{$STATIC-NEXT-HOP}</forwarding-address>
+            </ip-route-forwarding-list>
+          </route>
+          <prefix-list>
+            <prefixes>
+              <name>{$PREFIX-LIST-NAME}</name>
+              <seq>
+                <no>{$PREFIX-LIST-SEQ}</no>
+                <permit>
+                  <ip>{$STATIC-PREFIX}/{$STATIC-PREFIX-LENGTH}</ip>
+                </permit>
+              </seq>
+            </prefixes>
+          </prefix-list>
+        </ip>
+      </config>
+    </device>
+  </devices>
+</config-template>

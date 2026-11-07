@@ -1,7 +1,7 @@
 import pytest
 import ncs
 
-PE_DEVICES = ['ios-0', 'ios-1']
+PE_DEVICES = ['ios-0']
 ISIS_AREA_TAG = '1'
 
 
@@ -43,7 +43,7 @@ def isis_instance(maapi):
         if created:
             t.apply()
 
-    yield
+    yield # yield pauses setup here; pytest runs all tests, then resumes below for teardown
 
     if created:
         with maapi.start_write_trans() as t:

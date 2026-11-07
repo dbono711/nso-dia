@@ -5,7 +5,14 @@ from ncs.template import Template, Variables
 
 from .context import ServiceContext
 from .device import Device
-from .network import Network, get_intf_type_and_id, get_ip_and_mask
+from .network import (
+    Network,
+    get_intf_type_and_id,
+    get_ip_and_mask,
+    get_network_mask_and_length,
+    validate_next_hop,
+)
+from .premod import PREFIX_LIST_NAME
 
 ISIS_AREA_TAG = "1"
 
@@ -25,6 +32,7 @@ class Dia:
         vars.add("CUSTOMER-NAME", customer_name)
         vars.add("SERVICE-ID", service_id)
         vars.add("ISIS-AREA-TAG", ISIS_AREA_TAG)
+        vars.add("PREFIX-LIST-NAME", PREFIX_LIST_NAME)
 
         for device in self.ctx.service.provider_edge.device:
             self.ctx.log.info(f"Configuring device: {device.name}")
@@ -51,3 +59,38 @@ class Dia:
 
                 self.ctx.log.info(f"Applying dia-template to {intf_type}{intf_id} on {device.name}")
                 template.apply("dia-template", vars)
+
+                if intf.static.exists():
+                    self._setup_static(template, vars, device.name, intf)
+
+    def _setup_static(self, template: Template, vars: Variables, device_name: str, intf) -> None:
+        """Apply a static route and CUSTOMER-STATIC prefix-list entry for every destination
+        prefix on an interface
+
+        Args:
+            template (Template): Service template
+            vars (Variables): Template variables, already set for the device and interface
+            device_name (str): Network device hostname
+            intf: The service interface list entry
+
+        Raises:
+            ValueError: A route failed validation, or has no prefix-list sequence number
+        """
+        for route in intf.static.ipv4_destination_prefix:
+            network, mask, length = get_network_mask_and_length(route.ipv4_prefix)
+            validate_next_hop(intf.ipv4_address, route.ipv4_forwarding)
+            if route.prefix_list_seq is None:
+                raise ValueError(f"Static route {route.ipv4_prefix} on {device_name} has no prefix-list sequence number")
+            seq = int(route.prefix_list_seq)
+            self.network.validate_prefix_list_entry(device_name, PREFIX_LIST_NAME, seq, f"{network}/{length}")
+
+            vars.add("STATIC-PREFIX", network)
+            vars.add("STATIC-MASK", mask)
+            vars.add("STATIC-PREFIX-LENGTH", length)
+            vars.add("STATIC-NEXT-HOP", route.ipv4_forwarding)
+            vars.add("PREFIX-LIST-SEQ", seq)
+
+            self.ctx.log.info(
+                f"Applying dia-static for {network}/{length} via {route.ipv4_forwarding} (seq {seq}) on {device_name}"
+            )
+            template.apply("dia-static", vars)

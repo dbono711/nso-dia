@@ -2,13 +2,25 @@
 
 
 from ncs.application import Application, Service
+from ncs.maagic import cd
 
 from .completion import InterfaceCompletion
 from .context import ServiceContext
 from .dia import Dia
+from .premod import PreMod
 
 
 class ServiceCallbacks(Service):
+    @Service.pre_modification
+    def cb_pre_modification(self, tctx, op, kp, root, proplist):
+        if op == 2:
+            return  # nothing to do for 'Delete(2)' operation
+
+        self.log.info(f"Service premod(service={kp})")
+        service = cd(root, kp)
+        ctx = ServiceContext(log=self.log, root=root, service=service)
+        PreMod(ctx).fill()
+
     @Service.create
     def cb_create(self, tctx, root, service, proplist):
         self.log.info(f"Service create(service={service._path})")
